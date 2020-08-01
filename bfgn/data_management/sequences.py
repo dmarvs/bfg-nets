@@ -4,11 +4,14 @@ from typing import List, Tuple, Union
 import albumentations
 import keras
 import numpy as np
+import random
+import ipdb
 
 from bfgn.data_management.scalers import BaseGlobalScaler
+from bfgn.configuration import configs
+from bfgn.data_management import sequences
 
 _logger = logging.getLogger(__name__)
-
 
 ADDITIONAL_TARGETS_KEY = "image_{}"
 
@@ -23,12 +26,14 @@ class BaseSequence(keras.utils.Sequence):
         feature_scaler: BaseGlobalScaler,
         response_scaler: BaseGlobalScaler,
         batch_size: int,
+        batches_per_epoch: int,
         custom_augmentations: albumentations.Compose = None,
         nan_replacement_value: float = None,
     ) -> None:
         self.feature_scaler = feature_scaler
         self.response_scaler = response_scaler
         self.batch_size = batch_size
+        self.batches_per_epoch = batches_per_epoch
         self.custom_augmentations = custom_augmentations
         self.nan_replacement_value = nan_replacement_value
 
@@ -144,6 +149,7 @@ class MemmappedSequence(BaseSequence):
         feature_scaler: BaseGlobalScaler,
         response_scaler: BaseGlobalScaler,
         batch_size: int,
+        batches_per_epoch: int,
         feature_mean_centering: False,
         nan_replacement_value: None,
         custom_augmentations: albumentations.Compose = None,
@@ -155,6 +161,7 @@ class MemmappedSequence(BaseSequence):
             feature_scaler=feature_scaler,
             response_scaler=response_scaler,
             batch_size=batch_size,
+            batches_per_epoch = batches_per_epoch,
             custom_augmentations=custom_augmentations,
             nan_replacement_value=nan_replacement_value,
         )
@@ -189,10 +196,18 @@ class MemmappedSequence(BaseSequence):
         # grab the the appropriate number of samples from the current array
         sample_index = int(index * self.batch_size - self.cum_samples_per_array[current_array])
 
+        #print("sample_index: {}".format(sample_index))
+        #print("feature len  : {}".format(len(self.features)))
+        #print("cum_samples_per_array: {}".format(self.cum_samples_per_array))
+        #print("feat w array: {}".format(self.features[current_array]))
+        #print("samp ind: {}".format(sample_index))
+        #print("samp*size: {}".format(sample_index * self.batch_size))
+        #try:
         batch_features = (self.features[current_array])[sample_index : sample_index + self.batch_size, ...].copy()
         batch_responses = (self.responses[current_array])[sample_index : sample_index + self.batch_size, ...].copy()
         batch_weights = (self.weights[current_array])[sample_index : sample_index + self.batch_size, ...].copy()
-
+        #except:
+        #    ipdb.set_trace()
         # if the current array didn't have enough samples in it, roll forward to the next one (and keep
         # doing so until we have enough samples)
         while batch_features.shape[0] < self.batch_size:
@@ -286,3 +301,33 @@ def sample_custom_augmentations_constructor(num_features: int, window_radius: in
         p=1.0,
         additional_targets={target: "image" for target in additional_targets},
     )
+
+
+class ModifiedSequence(sequences.MemmappedSequence):
+    _index_tracker = None
+
+    def __len__(self):
+        
+        DESIRED_BATCHES_PER_EPOCH = self.batches_per_epoch
+        max_batches = int(np.ceil(self.cum_samples_per_array[-1] / self.batch_size))
+        batches_per_epoch = np.min([DESIRED_BATCHES_PER_EPOCH, max_batches])
+        #assert DESIRED_BATCHES_PER_EPOCH <= max_batches, (
+        #        "desired batches per epoch: {} is more than max possible batches: {}".format(DESIRED_BATCHES_PER_EPOCH, max_batches)
+        #        )
+        return batches_per_epoch
+
+    def __getitem__(self, index: int, return_raw_sample: bool = False):
+        new_index = self._get_index(index)
+        return super().__getitem__(new_index, return_raw_sample)
+
+    def _get_index(self, index):
+        # We need to do the following so that we don't always get the same batch; as
+        # implemented, we get batches/samples in the same order every epoch, so we
+        # need to be sure the batches are shuffled around when we select fewer
+        # batches per epoch.
+        # Shuffle all of the batch indices for a new epoch
+        if self._index_tracker is None or index == 0:
+            self._index_tracker = list(range(len(self)))
+            random.shuffle(self._index_tracker)
+        # Return a random batch index
+        return self._index_tracker[index]

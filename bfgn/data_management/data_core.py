@@ -8,7 +8,7 @@ import numpy as np
 
 from bfgn.configuration import configs, sections
 from bfgn.data_management import common_io, scalers, training_data
-from bfgn.data_management.sequences import MemmappedSequence
+from bfgn.data_management.sequences import ModifiedSequence
 from bfgn.utils import logging as root_logging
 
 _FILENAME_BUILT_DATA_CONFIG_SUFFIX = "built_data_config.yaml"
@@ -186,14 +186,11 @@ class DataContainer:
         ]
 
         if feature_scaler.is_fitted is False or rebuild is True:
-            # TODO: do better
-            feature_scaler.fit(self.features[self.train_folds[0]])
-            feature_scaler.save()
+                feature_scaler.fit(self.features[self.train_folds[0]])
+                feature_scaler.save()
         if response_scaler.is_fitted is False or rebuild is True:
-            # TODO: do better
-            response_scaler.fit(self.responses[self.train_folds[0]])
-            response_scaler.save()
-
+                response_scaler.fit(self.responses[self.train_folds[0]])
+                response_scaler.save()
         self.feature_scaler = feature_scaler
         self.response_scaler = response_scaler
 
@@ -226,7 +223,7 @@ class DataContainer:
 
     def _build_memmapped_sequence(
         self, fold_indices: List[int], custom_augmentations: albumentations.Compose = None
-    ) -> MemmappedSequence:
+    ) -> ModifiedSequence:
         errors = []
         if self.features is None:
             errors.append("data_container must have loaded feature numpy files")
@@ -247,16 +244,17 @@ class DataContainer:
             print("List of memmap sequence errors is as follows:\n" + "\n".join(error for error in errors))
         assert not errors, "Memmap sequence build errors found, terminating"
 
-        data_sequence = MemmappedSequence(
+        data_sequence = ModifiedSequence(
             [self.features[_f] for _f in fold_indices],
             [self.responses[_r] for _r in fold_indices],
             [self.weights[_w] for _w in fold_indices],
             self.feature_scaler,
             self.response_scaler,
             self.config.data_samples.batch_size,
+            self.config.model_training.batches_per_epoch,
             custom_augmentations=custom_augmentations,
             feature_mean_centering=self.config.data_build.feature_mean_centering,
-            nan_replacement_value=self.config.data_samples.feature_nodata_encoding,
+            nan_replacement_value=self.config.data_samples.feature_nodata_encoding
         )
         return data_sequence
 

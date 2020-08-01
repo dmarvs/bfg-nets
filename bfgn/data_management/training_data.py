@@ -9,6 +9,7 @@ import numpy as np
 import ogr
 import osr
 from tqdm import tqdm
+import random 
 
 from bfgn.configuration import configs, sections
 from bfgn.data_management import common_io, data_core, ooc_functions
@@ -163,7 +164,14 @@ def build_training_data_ordered(
         _logger.debug("Reading loop: Site {}".format(idx_site))
         _num_samples_site = 0
 
-        for idx_xy, xy_location in enumerate(all_site_xy_locations[idx_site]):
+        shuffled_locations = all_site_xy_locations[idx_site]
+        random.shuffle(shuffled_locations)
+        total_num = len(shuffled_locations)
+        YOUR_PROPORTION = config.data_build.proportion_subset
+        idx_finish = int(total_num * YOUR_PROPORTION)
+        shuffled_locations = shuffled_locations[:idx_finish]
+
+        for idx_xy, xy_location in enumerate(shuffled_locations):
             _logger.debug("Site index: {}".format(idx_xy))
 
             success = read_segmentation_chunk(
@@ -183,7 +191,7 @@ def build_training_data_ordered(
 
             is_site_sampling_complete = _num_samples_site == num_reads_per_site
             is_total_sampling_complete = _num_samples_total == config.data_build.max_samples
-            if is_site_sampling_complete or is_total_sampling_complete:
+            if (is_total_sampling_complete or is_site_sampling_complete):
                 break
 
         if is_total_sampling_complete:
