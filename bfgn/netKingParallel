@@ -1,0 +1,159 @@
+#!/usr/bin/env python
+import argparse
+import os
+import numpy as np
+from pathos.multiprocessing import ProcessPool
+import glob 
+
+from bfgn.configuration import configs
+from bfgn.data_management import data_core, apply_model_to_data
+import bfgn.reporting.reports
+from bfgn.experiments import experiments
+from bfgn.utils import logging
+
+parser = argparse.ArgumentParser(description='Example spatial extrapolation application')
+parser.add_argument('settings_file')
+parser.add_argument('key', type=str, choices=['all', 'train', 'report', 'apply'])
+parser.add_argument('-debug_level', type=str, default='INFO', choices=['DEBUG', 'INFO', 'WARN', 'ERROR'])
+parser.add_argument('-debug_file', type=str, default='debug.out')
+parser.add_argument('-o', '--output_file', type=str)
+parser.add_argument('-i', '--input_file', type=str, nargs='+')
+parser.add_argument('-ot', '--output_type', type=str, default='raw', choices=['raw','mle'])
+parser.add_argument('-stack', '--stack_inputs', action='store_true')
+args = parser.parse_args()
+
+logger = logging.get_bfgn_logger('bfgn',args.debug_level, args.debug_file)
+
+assert os.path.isfile(args.settings_file), 'Settings file: ' + args.settings_file + ' does not exist'
+config = configs.create_config_from_file(args.settings_file)
+
+#tmp_path = '/cfo/net-settings/test-parallel-site-samp.yaml'
+#config = configs.create_config_from_file(tmp_path)
+
+if not os.path.isdir(config.data_build.dir_out):
+
+    n_sites = len(config.raw_files.feature_files)
+    site_samp = config.data_build.max_samples / n_sites
+
+    data_container_sites = list()
+    for _site_idx in range(n_sites):
+
+        _site = [config.raw_files.feature_files[_site_idx]]
+        _site_response = [config.raw_files.response_files[_site_idx]]
+
+        _site_config = configs.create_config_from_file(args.settings_file)
+        _site_config.raw_files.feature_files = _site
+        _site_config.raw_files.response_files = _site_response
+        _site_config.data_build.max_samples = int(np.ceil(site_samp))
+        _site_config.data_build.filename_prefix_out = 'temp_' +_site_config.data_build.filename_prefix_out + '-site-' + str(_site_idx)
+        _site_config.data_build.sparse_read = False
+
+        print('appending {}'.format(_site))
+        data_container_sites.append(data_core.DataContainer(_site_config))
+
+    #def parallelize_read(sites, func, cores):
+    #    site_read = np.array(sites)
+    #    pool = ProcessPool(cores)
+    #    pool.map(func, site_read)
+    #    pool.close()
+    #    pool.join()
+    #    pass
+
+    def _data_container_sites(container):
+        container.build_or_load_rawfile_data()
+        pass
+    
+    # submit parallel sampling
+    ncores = n_sites
+    #parallelize_read(range(n_sites),_data_container_sites, ncores)
+    pool = ProcessPool(ncores)
+    pool.map(_data_container_sites, data_container_sites)
+
+    # reconstruct to single files
+    for var in ['features','responses','weights']:
+        for _fold in range(config.data_build.number_folds):
+            files = glob.glob(config.data_build.dir_out + '/*{0}_{1}.npy'.format(var,_fold))
+            files_sorted = sorted(files)
+            file_list = list()#
+            for file in files_sorted:
+                file_list.append(np.load(file))
+            file_out = os.path.join(config.data_build.dir_out, config.data_build.filename_prefix_out + '_{0}_{1}.npy'.format(var,_fold))
+            #print('fold {}, {}'.format(_fold, np.concatenate(file_list).squeeze().shape)) 
+            if var == 'features':
+                #print('{} set {}, {}'.format(var,_fold, np.concatenate(file_list).squeeze().shape))
+                np.save(file_out,np.concatenate(file_list).squeeze())
+            else:
+                print('{} set {}, {}'.format(var,_fold, np.concatenate(file_list).shape))
+                np.save(file_out, np.concatenate(file_list))
+            [os.remove(f) for f in files]
+
+    # alter data_container file
+    dc = glob.glob(config.data_build.dir_out + '/data_container*')[0]
+    dc_new = dc.replace('temp_','').replace('-site-0','')
+    os.rename(dc,dc_new) 
+    [os.remove(f) for f in glob.glob(config.data_build.dir_out + '/data_container_temp*')]
+
+    # alter the data config file
+    cf = glob.glob(config.data_build.dir_out + '/temp_*built_data_config.yaml')[0]
+    cf_new = cf.replace('temp_','').replace('-site-0','')
+    os.rename(cf,cf_new) 
+    [os.remove(f) for f in glob.glob(config.data_build.dir_out + '/temp_*built_data_config.yaml')]
+
+
+data_container = data_core.DataContainer(config)
+# reload build data
+data_container.build_or_load_rawfile_data()
+data_container.build_or_load_scalers()
+data_container.load_sequences()
+
+experiment = experiments.Experiment(config)
+experiment.build_or_load_model(data_container=data_container)
+experiment.history['is_model_trained'] = True
+experiment.is_model_trained = True
+
+if (args.key == 'train' or args.key == 'all'):
+    experiment.fit_model_with_data_container(data_container, resume_training=True)
+
+if (args.key == 'report' or args.key == 'all'):
+    final_report = bfgn.reporting.reports.Reporter(data_container, experiment, config)
+    final_report.create_model_report()
+
+if (args.key == 'apply' or args.key == 'all'):
+    application_output_basenames = [args.output_file] #[args.output_file] if len(args.output_file) == 1 else args.output_file
+    if (args.output_type == 'raw'):
+        application_feature_files = [args.input_file] if len(args.input_file) == 1 else args.input_file
+        if args.stack_inputs:
+            bfgn.data_management.apply_model_to_data.apply_model_to_site(experiment.model,
+                                                                        data_container,
+                                                                        application_feature_files,
+                                                                        application_output_basenames[0], creation_options=['COMPRESS=DEFLATE','TILED=YES','BIGTIFF=YES'],
+                                                                        output_format='GTiff')
+
+        elif len(application_feature_files) > 1:
+            output_path = args.output_file
+            _application_output_basenames = [application_feature_files[n].replace('.tif','_predict_raw') for n in np.arange(len(application_feature_files))]
+            application_output_basenames = [os.path.join(output_path, os.path.split(n)[-1]) for n in _application_output_basenames]
+            print('inputs: {}'.format(application_feature_files))
+            for _f in range(len(application_feature_files)):
+                bfgn.data_management.apply_model_to_data.apply_model_to_site(experiment.model,
+                                                                        data_container,
+                                                                        [application_feature_files[_f]],
+                                                                        application_output_basenames[_f], creation_options=['COMPRESS=DEFLATE','TILED=YES','BIGTIFF=YES'],
+                                                                        output_format='GTiff')
+        else:
+            application_feature_files = args.input_file
+            print('file in: {}'.format(application_feature_files))
+            bfgn.data_management.apply_model_to_data.apply_model_to_site(experiment.model,
+                                                                        data_container,
+                                                                        application_feature_files,
+                                                                        application_output_basenames[0], creation_options=['COMPRESS=DEFLATE','TILED=YES','BIGTIFF=YES'],
+                                                                        output_format='GTiff')
+    if (args.output_type == 'mle'):
+        likelihood_files = [args.input_file]
+        for _f in range(len(likelihood_files)):
+            bfgn.data_management.apply_model_to_data.maximum_likelihood_classification(likelihood_files[_f],
+                                                                        data_container,
+                                                                        application_output_basenames[_f], creation_options=['COMPRESS=DEFLATE','TILED=YES','BIGTIFF=YES'],
+                                                                        output_format='GTiff')
+ 
+
