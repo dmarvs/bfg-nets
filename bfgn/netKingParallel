@@ -76,25 +76,24 @@ if not os.path.isdir(config.data_build.dir_out):
                 #print('{} set {}, {}'.format(var,_fold, np.concatenate(file_list).squeeze().shape))
                 np.save(file_out,np.concatenate(file_list).squeeze())
             else:
-                print('{} set {}, {}'.format(var,_fold, np.concatenate(file_list).shape))
+                #print('{} set {}, {}'.format(var,_fold, np.concatenate(file_list).shape))
                 np.save(file_out, np.concatenate(file_list))
             [os.remove(f) for f in files]
 
     # alter data_container file
-    dc = glob.glob(config.data_build.dir_out + '/data_container*')[0]
+    dc = sorted(glob.glob(config.data_build.dir_out + '/data_container*'))[0]
     dc_new = dc.replace('temp_','').replace('-site-0','')
     os.rename(dc,dc_new) 
     [os.remove(f) for f in glob.glob(config.data_build.dir_out + '/data_container_temp*')]
 
     # alter the data config file
-    cf = glob.glob(config.data_build.dir_out + '/temp_*built_data_config.yaml')[0]
+    cf = sorted(glob(config.data_build.dir_out + '/temp_*built_data_config.yaml'))[0]
     cf_new = cf.replace('temp_','').replace('-site-0','')
     os.rename(cf,cf_new) 
     [os.remove(f) for f in glob.glob(config.data_build.dir_out + '/temp_*built_data_config.yaml')]
 
-
+# reload built data
 data_container = data_core.DataContainer(config)
-# reload build data
 data_container.build_or_load_rawfile_data()
 data_container.build_or_load_scalers()
 data_container.load_sequences()
