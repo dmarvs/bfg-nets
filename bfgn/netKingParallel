@@ -51,23 +51,16 @@ if not os.path.isdir(config.data_build.dir_out):
         print('appending {}'.format(_site))
         data_container_sites.append(data_core.DataContainer(_site_config))
 
-    #def parallelize_read(sites, func, cores):
-    #    site_read = np.array(sites)
-    #    pool = ProcessPool(cores)
-    #    pool.map(func, site_read)
-    #    pool.close()
-    #    pool.join()
-    #    pass
-
     def _data_container_sites(container):
         container.build_or_load_rawfile_data()
         pass
     
     # submit parallel sampling
     ncores = n_sites
-    #parallelize_read(range(n_sites),_data_container_sites, ncores)
     pool = ProcessPool(ncores)
     pool.map(_data_container_sites, data_container_sites)
+    #pool.close()
+    #pool.join()
 
     # reconstruct to single files
     for var in ['features','responses','weights']:
