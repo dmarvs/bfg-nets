@@ -87,7 +87,7 @@ if not os.path.isdir(config.data_build.dir_out):
     [os.remove(f) for f in glob.glob(config.data_build.dir_out + '/data_container_temp*')]
 
     # alter the data config file
-    cf = sorted(glob(config.data_build.dir_out + '/temp_*built_data_config.yaml'))[0]
+    cf = sorted(glob.glob(config.data_build.dir_out + '/temp_*built_data_config.yaml'))[0]
     cf_new = cf.replace('temp_','').replace('-site-0','')
     os.rename(cf,cf_new) 
     [os.remove(f) for f in glob.glob(config.data_build.dir_out + '/temp_*built_data_config.yaml')]
