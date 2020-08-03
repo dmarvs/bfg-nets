@@ -46,7 +46,6 @@ if not os.path.isdir(config.data_build.dir_out):
         _site_config.raw_files.response_files = _site_response
         _site_config.data_build.max_samples = int(np.ceil(site_samp))
         _site_config.data_build.filename_prefix_out = 'temp_' +_site_config.data_build.filename_prefix_out + '-site-' + str(_site_idx)
-        _site_config.data_build.sparse_read = False
 
         print('appending {}'.format(_site))
         data_container_sites.append(data_core.DataContainer(_site_config))
