@@ -192,6 +192,7 @@ def build_training_data_ordered(
             is_site_sampling_complete = _num_samples_site == num_reads_per_site
             is_total_sampling_complete = _num_samples_total == config.data_build.max_samples
             if (is_total_sampling_complete or is_site_sampling_complete):
+                np.save(config.data_build.filename_prefix_out + '_testxy_loc', shuffled_locations[idx_xy:])
                 break
 
         if is_total_sampling_complete:
