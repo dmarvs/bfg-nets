@@ -252,6 +252,9 @@ class DataBuild(BaseConfigSection):
     _max_built_data_gb_type = float
     max_built_data_gb = 10.0
     """float: The maximum size of any given memmap array created in GB."""
+    _proportion_subset_type = float
+    proportion_subset = 0.6
+    """float: The proprtion of data to subset for training after shuffling."""
     _number_folds_type = int
     number_folds = 10
     """int: Number of training data folds."""
@@ -374,6 +377,9 @@ class ModelTraining(BaseConfigSection):
     _max_epochs_type = int
     max_epochs = 100
     """int: Maximum number of epochs to run model training."""
+    _batches_per_epoch_type = int
+    batches_per_epoch = 10000
+    """int: Maximum number of minibatches to process in each epoch."""
     _optimizer_type = str
     optimizer = "adam"
     """str: Optimizer to use during model training. See Keras documentation for more information."""
