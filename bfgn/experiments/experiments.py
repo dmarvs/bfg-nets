@@ -4,7 +4,7 @@ from typing import Callable, Tuple
 
 import keras.backend as K
 import numpy as np
-
+from tensorflow.keras.metrics import RootMeanSquaredError, MeanAbsoluteError
 from bfgn.architectures import config_sections
 from bfgn.configuration import configs
 from bfgn.data_management.data_core import DataContainer
@@ -101,7 +101,25 @@ class Experiment(object):
         self.model = config_sections.create_model_from_architecture_config_section(
             self.config.model_training.architecture_name, self.config.architecture, input_shape
         )
-        self.model.compile(loss=self._create_loss_function(), optimizer=self.config.model_training.optimizer)
+        if self.config.model_training.optimizer is 'amsgrad':
+            from tensorflow.keras.optimizers import Adam
+            optim = Adam(amsgrad=True)
+        else:
+            optim = self.config.model_training.optimizer
+        
+        metric_rmse = losses.get_cropped_loss_function(
+                RootMeanSquaredError,
+                2 * self.config.data_build.window_radius,
+                2 * self.config.data_build.loss_window_radius,
+                self.config.model_training.weighted,)
+        
+        metric_mae = losses.get_cropped_loss_function(
+                MeanAbsoluteError,
+                self.config.model_training.loss_metric,
+                2 * self.config.data_build.loss_window_radius,
+                self.config.model_training.weighted,)
+
+        self.model.compile(loss=self._create_loss_function(), optimizer=optim, metrics=[metric_rmse, metric_mae])
         self.model_gbs = self.calculate_model_memory_footprint(self.config.data_samples.batch_size)
         models.save_model(self.model, self.filepath_model)
         self.loaded_existing_model = False
