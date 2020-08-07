@@ -4,7 +4,6 @@ from typing import Callable, Tuple
 
 import keras.backend as K
 import numpy as np
-from tensorflow.keras.metrics import RootMeanSquaredError, MeanAbsoluteError
 from bfgn.architectures import config_sections
 from bfgn.configuration import configs
 from bfgn.data_management.data_core import DataContainer
@@ -101,23 +100,20 @@ class Experiment(object):
         self.model = config_sections.create_model_from_architecture_config_section(
             self.config.model_training.architecture_name, self.config.architecture, input_shape
         )
-        if self.config.model_training.optimizer is 'amsgrad':
-            from tensorflow.keras.optimizers import Adam
-            optim = Adam(amsgrad=True)
+        if str(self.config.model_training.optimizer) == "amsgrad":
+            from keras.optimizers import adam
+            optim = adam(amsgrad=True)
         else:
             optim = self.config.model_training.optimizer
         
         metric_rmse = losses.get_cropped_loss_function(
-                RootMeanSquaredError,
+                'rmse',
                 2 * self.config.data_build.window_radius,
                 2 * self.config.data_build.loss_window_radius,
                 self.config.model_training.weighted,)
         
-        metric_mae = losses.get_cropped_loss_function(
-                MeanAbsoluteError,
-                self.config.model_training.loss_metric,
-                2 * self.config.data_build.loss_window_radius,
-                self.config.model_training.weighted,)
+        metric_mae = self._create_metric_function('mae')
+        metric_rmse = self._create_metric_function('rmse')
 
         self.model.compile(loss=self._create_loss_function(), optimizer=optim, metrics=[metric_rmse, metric_mae])
         self.model_gbs = self.calculate_model_memory_footprint(self.config.data_samples.batch_size)
@@ -160,6 +156,15 @@ class Experiment(object):
             self._init_epoch = len(self.history["lr"])
         init_learning_rate = self.history["lr"][self._init_epoch - 1]
         K.set_value(self.model.optimizer.lr, init_learning_rate)
+
+    def _create_metric_function(self, metric) -> Callable:
+        self.metric = metric
+        return losses.get_cropped_loss_function(
+                self.metric,
+                2 * self.config.data_build.window_radius,
+                2 * self.config.data_build.loss_window_radius,
+                self.config.model_training.weighted,
+        )
 
     def _create_loss_function(self) -> Callable:
         return losses.get_cropped_loss_function(
