@@ -6,7 +6,7 @@ import keras
 _logger = logging.getLogger(__name__)
 
 
-DEFAULT_FILENAME_MODEL = "model.h5"
+DEFAULT_FILENAME_MODEL = "model-best.h5"
 
 
 def load_model(filepath: str, custom_objects: dict = None) -> Union[keras.models.Model, None]:

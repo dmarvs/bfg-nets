@@ -69,4 +69,5 @@ def get_cropped_loss_function(loss_method: str, outer_width: int, inner_width: i
 
         return loss
 
+    _cropped_loss.__name__ = "_" + str(loss_method)
     return _cropped_loss

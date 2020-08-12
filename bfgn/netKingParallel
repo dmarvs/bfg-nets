@@ -98,7 +98,10 @@ data_container.build_or_load_scalers()
 data_container.load_sequences()
 
 experiment = experiments.Experiment(config)
+#try:
 experiment.build_or_load_model(data_container=data_container)
+#except:
+#    import ipdb;ipdb.set_trace()
 experiment.history['is_model_trained'] = True
 experiment.is_model_trained = True
 

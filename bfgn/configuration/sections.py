@@ -437,12 +437,31 @@ class ModelReporting(BaseConfigSection):
 
 class CallbackGeneral(BaseConfigSection):
     _checkpoint_periods_type = int
-    checkpoint_periods = 5
+    checkpoint_periods = DEFAULT_OPTIONAL_VALUE
     """int: Number of periods of model training between model state and history saves."""
+    _save_best_model_type = bool
+    save_best_model = True
+    """bool: Save only the best model as defined by the loss_metric"""
     _use_terminate_on_nan_type = bool
     use_terminate_on_nan = True
     """bool: Terminate model training if nans are observed."""
 
+class CallbackCyclicalLearning(BaseConfigSection):
+    _use_callback_type = bool
+    use_callback = True
+    """bool: Use the Cyclical Learning Rate callback."""
+    _cycles_type = int
+    cycles = 20
+    """int: an integer for a number of cycles."""
+    _learning_type =list
+    learning = [0.001,0.1]
+    """list: a list of starting (usually minimum) lr value and maximum (peak) lr value."""
+    _verbose_type = bool
+    verbose = False
+    """bool: True or False to print progress."""
+    _amplitude_type = float
+    amplitude = 0.333
+    """float: a fractonal value to modify the amplitude of the cycle"""
 
 class CallbackTensorboard(BaseConfigSection):
     _use_callback_type = bool
@@ -506,6 +525,7 @@ def get_config_sections() -> List[Type[BaseConfigSection]]:
         ModelTraining,
         ModelReporting,
         CallbackGeneral,
+        CallbackCyclicalLearning,
         CallbackTensorboard,
         CallbackEarlyStopping,
         CallbackReducedLearningRate,

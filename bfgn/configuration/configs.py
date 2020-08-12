@@ -35,6 +35,8 @@ class Config(object):
     """sections.ModelReporting: ModelReporting config section."""
     callback_general = None
     """sections.CallbacksGeneral: CallbacksGeneral config section."""
+    callback_cyclical_learning = None
+    """sections.CallbackCyclicalLearning: CallbackCyclicalLearning"""
     callback_tensorboard = None
     """sections.Tensorboard: Tensorboard config section."""
     callback_early_stopping = None
@@ -51,6 +53,7 @@ class Config(object):
         architecture: config_sections.BaseArchitectureConfigSection = None,
         model_reporting: sections.ModelReporting = None,
         callback_general: sections.CallbackGeneral = None,
+        callback_cyclical_learning: sections.CallbackCyclicalLearning = None,
         callback_tensorboard: sections.CallbackTensorboard = None,
         callback_early_stopping: sections.CallbackEarlyStopping = None,
         callback_reduced_learning_rate: sections.CallbackReducedLearningRate = None,
@@ -69,6 +72,7 @@ class Config(object):
         self.architecture = architecture
         self.model_reporting = model_reporting
         self.callback_general = callback_general
+        self.callback_cyclical_learning = callback_cyclical_learning
         self.callback_tensorboard = callback_tensorboard
         self.callback_early_stopping = callback_early_stopping
         self.callback_reduced_learning_rate = callback_reduced_learning_rate

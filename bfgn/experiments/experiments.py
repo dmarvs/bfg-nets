@@ -102,15 +102,9 @@ class Experiment(object):
         )
         if str(self.config.model_training.optimizer) == "amsgrad":
             from keras.optimizers import adam
-            optim = adam(amsgrad=True)
+            optim = adam(0.002, amsgrad=True)
         else:
             optim = self.config.model_training.optimizer
-        
-        metric_rmse = losses.get_cropped_loss_function(
-                'rmse',
-                2 * self.config.data_build.window_radius,
-                2 * self.config.data_build.loss_window_radius,
-                self.config.model_training.weighted,)
         
         metric_mae = self._create_metric_function('mae')
         metric_rmse = self._create_metric_function('rmse')
@@ -128,7 +122,12 @@ class Experiment(object):
 
     def _load_existing_model(self, input_shape: Tuple[int, int, int]) -> None:
         self.model = models.load_model(
-            self.filepath_model, custom_objects={"_cropped_loss": self._create_loss_function()}
+                self.filepath_model, 
+                custom_objects={"_cropped_loss": self._create_loss_function(), 
+                                "_rmse": self._create_metric_function("rmse"),
+                                "_mae": self._create_metric_function("mae"),
+                                "_mse": self._create_metric_function("mse"),
+                             }
         )
         self.model_gbs = self.calculate_model_memory_footprint(self.config.data_samples.batch_size)
         existing_shape = self.model.layers[0].input_shape[1:]
@@ -176,7 +175,7 @@ class Experiment(object):
 
     def fit_model_with_data_container(self, data_container: DataContainer, resume_training: bool = False) -> None:
         return self.fit_model_with_sequences(
-            data_container.training_sequence, data_container.validation_sequence, resume_training
+                data_container.training_sequence, data_container.validation_sequence, resume_training
         )
 
     def fit_model_with_sequences(
@@ -188,6 +187,7 @@ class Experiment(object):
             compute_access.assert_gpu_available()
 
         model_callbacks = callbacks.get_model_callbacks(self.config, self.history)
+        print("CALLBACKS USED: {}".format(model_callbacks))
 
         new_history = self.model.fit_generator(
             training_sequence,
@@ -195,7 +195,8 @@ class Experiment(object):
             verbose=self.config.model_training.verbosity,
             callbacks=model_callbacks,
             validation_data=validation_sequence,
-            max_queue_size=min(10, 2 * compute_access.get_count_available_cpus()),
+            max_queue_size=max(10, 2 * compute_access.get_count_available_cpus()),
+            workers= compute_access.get_count_available_cpus(),
             use_multiprocessing=False,
             shuffle=False,
             initial_epoch=self._init_epoch,
@@ -204,7 +205,10 @@ class Experiment(object):
         self.is_model_trained = True
         self.history = histories.combine_histories(self.history, new_history.history)
         self.history[KEY_HISTORY_IS_MODEL_TRAINED] = True
-        histories.save_history(self.history, get_history_filepath(self.config))
+        try:
+            histories.save_history(self.history, get_history_filepath(self.config))
+        except:
+            import ipdb;ipdb.set_trace()
 
     def calculate_model_memory_footprint(self, batch_size: int) -> float:
         """Calculate model memory footprint. Shamelessly copied from (but not tested rigorously):
