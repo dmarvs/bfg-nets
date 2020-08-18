@@ -10,7 +10,7 @@ import keras.backend as K
 from bfgn.configuration import configs
 from bfgn.experiments import experiments, histories
 
-from keras_one_cycle_clr import CLR
+#from keras_one_cycle_clr import CLR
 
 _logger = logging.getLogger(__name__)
 
@@ -84,20 +84,20 @@ class HistoryCheckpoint(keras.callbacks.Callback):
         histories.save_history(combined_history, experiments.get_history_filepath(self.config))
 
 
-class CyclicalLearning(CLR):
-
-    def __init__(self, config: configs.Config, cycles, learning, verbose, amplitude):
-        self.config = config
-        super().__init__(
-            cyc = cycles,
-            lr_range = (learning[0], learning[1]),
-            momentum_range = (0.95, 0.85),
-            amplitude_fn = lambda x: np.power(self.amplitude, x),
-            verbose = verbose,
-            batch_size = None, # self.config.data_samples.batch_size,
-            batches_per_epoch = self.config.model_training.batches_per_epoch,
-        )
-        print("Cyclical Learning is ON with keys")
+#class CyclicalLearning(CLR):
+#
+#    def __init__(self, config: configs.Config, cycles, learning, verbose, amplitude):
+#        self.config = config
+#        super().__init__(
+#            cyc = cycles,
+#            lr_range = (learning[0], learning[1]),
+#            momentum_range = (0.95, 0.85),
+#            amplitude_fn = lambda x: np.power(self.amplitude, x),
+#            verbose = verbose,
+#            batch_size = None, # self.config.data_samples.batch_size,
+#            batches_per_epoch = self.config.model_training.batches_per_epoch,
+#        )
+#        print("Cyclical Learning is ON with keys")
 
 
 class CustomMetric(keras.callbacks.Callback):
@@ -238,16 +238,16 @@ def get_model_callbacks(config: configs.Config, existing_history: dict) -> List[
         #CustomMetric(),
     ]
     
-    if config.callback_cyclical_learning.use_callback:
-        callbacks.append(
-                CyclicalLearning(
-                config = config,
-                cycles = config.callback_cyclical_learning.cycles,
-                learning = config.callback_cyclical_learning.learning,
-                verbose = config.callback_cyclical_learning.verbose,
-                amplitude = config.callback_cyclical_learning.amplitude,
-            )
-        )
+#    if config.callback_cyclical_learning.use_callback:
+#        callbacks.append(
+#                CyclicalLearning(
+#                config = config,
+#                cycles = config.callback_cyclical_learning.cycles,
+#                learning = config.callback_cyclical_learning.learning,
+#                verbose = config.callback_cyclical_learning.verbose,
+#                amplitude = config.callback_cyclical_learning.amplitude,
+#            )
+#        )
     if config.callback_general.save_best_model:
         callbacks.append(
             keras.callbacks.ModelCheckpoint(
