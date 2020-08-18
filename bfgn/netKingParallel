@@ -53,7 +53,7 @@ if not os.path.isdir(config.data_build.dir_out):
     def _data_container_sites(container):
         container.build_or_load_rawfile_data()
         pass
-    
+
     # submit parallel sampling
     ncores = n_sites
     pool = ProcessPool(ncores)
@@ -98,10 +98,7 @@ data_container.build_or_load_scalers()
 data_container.load_sequences()
 
 experiment = experiments.Experiment(config)
-#try:
 experiment.build_or_load_model(data_container=data_container)
-#except:
-#    import ipdb;ipdb.set_trace()
 experiment.history['is_model_trained'] = True
 experiment.is_model_trained = True
 
@@ -110,6 +107,7 @@ if (args.key == 'train' or args.key == 'all'):
 
 if (args.key == 'report' or args.key == 'all'):
     final_report = bfgn.reporting.reports.Reporter(data_container, experiment, config)
+    final_report.data_container.validation_sequence.batch_size = 1000
     final_report.create_model_report()
 
 if (args.key == 'apply' or args.key == 'all'):

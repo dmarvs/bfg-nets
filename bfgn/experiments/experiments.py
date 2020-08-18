@@ -103,6 +103,9 @@ class Experiment(object):
         if str(self.config.model_training.optimizer) == "amsgrad":
             from keras.optimizers import adam
             optim = adam(0.002, amsgrad=True)
+        elif str(self.config.model_training.optimizer) == "sgd":
+            from keras.optimizers import sgd
+            optim = sgd(0.01, nesterov=True) 
         else:
             optim = self.config.model_training.optimizer
         

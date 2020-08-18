@@ -199,6 +199,7 @@ class Reporter(object):
         ax.text(pmin + (pmax - pmin) * 0.05, pmin + (pmax - pmin) * 0.95, "MAD: " + mad, fontsize=fs)
         ax.text(pmin + (pmax - pmin) * 0.05, pmin + (pmax - pmin) * 0.90, "RMSE: " + rmse, fontsize=fs)
         ax.text(pmin + (pmax - pmin) * 0.05, pmin + (pmax - pmin) * 0.85, "R${^2}$${_\mathrm{o}}$: " + r2o, fontsize=fs)
+        ax.text(pmin + (pmax - pmin) * 0.05, pmin + (pmax - pmin) * 0.80, "Samples: " + str(pred_Y.shape[0]), fontsize=fs) 
 
         ax.set_xlabel("Actual")
         ax.set_ylabel("Predicted")
