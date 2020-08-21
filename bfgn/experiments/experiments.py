@@ -68,6 +68,7 @@ class Experiment(object):
         )
 
         self._save_new_config_or_assert_existing_config_matches()
+        self.load_cpu = False
 
     def _save_new_config_or_assert_existing_config_matches(self) -> None:
         if not os.path.exists(self.filepath_config):
@@ -130,7 +131,8 @@ class Experiment(object):
                                 "_rmse": self._create_metric_function("rmse"),
                                 "_mae": self._create_metric_function("mae"),
                                 "_mse": self._create_metric_function("mse"),
-                             }
+                             },
+                load_cpu = self.load_cpu
         )
         self.model_gbs = self.calculate_model_memory_footprint(self.config.data_samples.batch_size)
         existing_shape = self.model.layers[0].input_shape[1:]

@@ -20,6 +20,7 @@ parser.add_argument('-o', '--output_file', type=str)
 parser.add_argument('-i', '--input_file', type=str, nargs='+')
 parser.add_argument('-ot', '--output_type', type=str, default='raw', choices=['raw','mle'])
 parser.add_argument('-stack', '--stack_inputs', action='store_true')
+parser.add_argument('-cpu', '--load_cpu', action='store_true')
 args = parser.parse_args()
 
 logger = logging.get_bfgn_logger('bfgn',args.debug_level, args.debug_file)
@@ -98,6 +99,8 @@ data_container.build_or_load_scalers()
 data_container.load_sequences()
 
 experiment = experiments.Experiment(config)
+if args.load_cpu:
+    experiment.load_cpu = True
 experiment.build_or_load_model(data_container=data_container)
 experiment.history['is_model_trained'] = True
 experiment.is_model_trained = True
