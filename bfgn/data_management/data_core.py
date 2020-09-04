@@ -125,7 +125,7 @@ class DataContainer:
             )
 
             if len(errors) > 0:
-                print("List of raw data file format errors is as follows:\n" + "\n".join(error for error in errors))
+                _logger.info("List of raw data file format errors is as follows:\n" + "\n".join(error for error in errors))
             assert not errors, "Raw data file errors found, terminating"
 
             self.feature_raw_band_types = self.get_band_types(
@@ -241,7 +241,7 @@ class DataContainer:
             errors.append("config.data_samples.batch_size must be defined")
 
         if len(errors) > 0:
-            print("List of memmap sequence errors is as follows:\n" + "\n".join(error for error in errors))
+            _logger.info("List of memmap sequence errors is as follows:\n" + "\n".join(error for error in errors))
         assert not errors, "Memmap sequence build errors found, terminating"
 
         data_sequence = ModifiedSequence(

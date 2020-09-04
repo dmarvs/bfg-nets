@@ -9,7 +9,7 @@ from bfgn.configuration import configs
 from bfgn.data_management import data_core, apply_model_to_data
 import bfgn.reporting.reports
 from bfgn.experiments import experiments
-from bfgn.utils import logging
+#from bfgn.utils import logging
 
 parser = argparse.ArgumentParser(description='Example spatial extrapolation application')
 parser.add_argument('settings_file')
@@ -23,7 +23,15 @@ parser.add_argument('-stack', '--stack_inputs', action='store_true')
 parser.add_argument('-cpu', '--load_cpu', action='store_true')
 args = parser.parse_args()
 
-logger = logging.get_bfgn_logger('bfgn',args.debug_level, args.debug_file)
+
+
+import logging
+from google.cloud import logging as gcloud_logging
+LOGGING_CLIENT = gcloud_logging.Client('california-fores-1547767414612')
+LOGGING_CLIENT.get_default_handler()
+LOGGING_CLIENT.setup_logging(log_level=logging.INFO)  
+logger = logging.getLogger()
+
 
 assert os.path.isfile(args.settings_file), 'Settings file: ' + args.settings_file + ' does not exist'
 config = configs.create_config_from_file(args.settings_file)

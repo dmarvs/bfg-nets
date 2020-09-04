@@ -196,6 +196,8 @@ def _create_config(config_options: dict, is_template: bool) -> Config:
         populated_section = config_section()
         populated_section.set_config_options(config_copy.get(section_name, dict()), is_template)
         populated_sections[section_name] = populated_section
+    populated_sections['data_build'].dir_out = '/home/cfo_3m_models'
+    populated_sections['model_training'].dir_out = '/home/cfo_3m_models'
     # Populate architecture options given architecture name
     architecture_name = populated_sections["model_training"].architecture_name
     architecture = config_sections.get_architecture_config_section(architecture_name)
