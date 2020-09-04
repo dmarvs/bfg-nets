@@ -127,7 +127,7 @@ if (args.key == 'report' or args.key == 'all'):
 if (args.key == 'apply' or args.key == 'apply-3m' or args.key == 'all'):
     data_container = data_core.DataContainer(config)
     if args.key == 'apply-3m':
-        DIR_MODEL = '/home/dave/cfo_3m_models'
+        DIR_MODEL = '/home/cfo_3m_models'
         feature_scaler_names = data_container.config.data_samples.feature_scaler_names[0]
         response_scaler_names = data_container.config.data_samples.response_scaler_names[0]
 
