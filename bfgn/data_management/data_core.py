@@ -186,11 +186,13 @@ class DataContainer:
         ]
 
         if feature_scaler.is_fitted is False or rebuild is True:
-                feature_scaler.fit(self.features[self.train_folds[0]])
-                feature_scaler.save()
+            assert False
+            feature_scaler.fit(self.features[self.train_folds[0]])
+            feature_scaler.save()
         if response_scaler.is_fitted is False or rebuild is True:
-                response_scaler.fit(self.responses[self.train_folds[0]])
-                response_scaler.save()
+            assert False
+            response_scaler.fit(self.responses[self.train_folds[0]])
+            response_scaler.save()
         self.feature_scaler = feature_scaler
         self.response_scaler = response_scaler
 

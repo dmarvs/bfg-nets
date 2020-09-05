@@ -126,6 +126,7 @@ class BaseSklearnScaler(BaseGlobalScaler):
 
     def load(self):
         _logger.info('scaler path {} scaler isfile {} scaler exists {}'.format(self.savename, os.path.isfile(self.savename), os.path.exists(self.savename)))
+        assert os.path.exist(self.savename)
         if os.path.isfile(self.savename):
             self.scaler = joblib.load(self.savename)
             self.is_fitted = True
