@@ -42,7 +42,7 @@ def apply_model_to_site(
     :Returns
         None
     """
-    assert data_container.response_scaler is not None:
+    assert data_container.response_scaler is not None
     assert CNN_MODE is False, "CNN mode application not yet supported"
 
     config = data_container.config
@@ -120,13 +120,13 @@ def apply_model_to_site(
         tile_dat[np.isnan(tile_dat)] = config.data_samples.feature_nodata_encoding
 
         pred_y = cnn.predict(tile_dat)
-        stats = (np.min(pred_y), np.mean(pred_y), np.max(pred_y))
-        assert data_container.response_scaler is not None:
+        stats = str((np.min(pred_y), np.mean(pred_y), np.max(pred_y)))
+        assert data_container.response_scaler is not None
         if data_container.response_scaler is not None:
             pred_y = data_container.response_scaler.inverse_transform(pred_y)
         else:
             raise AssertionError('What the fuck')
-        _logger.info(stats, (np.min(pred_y), np.mean(pred_y), np.max(pred_y)))
+        _logger.info(stats + str((np.min(pred_y), np.mean(pred_y), np.max(pred_y))))
 
         if exclude_feature_nodata:
             is_nan_or_nodata = np.logical_or(np.isnan(tile_dat), is_nodata)
