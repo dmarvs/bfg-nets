@@ -6,14 +6,14 @@ from pathos.multiprocessing import ProcessPool
 import glob 
 
 from bfgn.configuration import configs
-from bfgn.data_management import data_core, apply_model_to_data
+from bfgn.data_management import data_core, apply_model_to_data, scalers
 import bfgn.reporting.reports
 from bfgn.experiments import experiments
 from bfgn.utils import logging
 
 parser = argparse.ArgumentParser(description='Example spatial extrapolation application')
 parser.add_argument('settings_file')
-parser.add_argument('key', type=str, choices=['all', 'train', 'report', 'apply'])
+parser.add_argument('key', type=str, choices=['all', 'train', 'report', 'apply', 'apply-3m'])
 parser.add_argument('-debug_level', type=str, default='INFO', choices=['DEBUG', 'INFO', 'WARN', 'ERROR'])
 parser.add_argument('-debug_file', type=str, default='debug.out')
 parser.add_argument('-o', '--output_file', type=str)
@@ -55,7 +55,7 @@ if (args.key == 'train' or args.key == 'all'):
             pass
 
         # submit parallel sampling
-        ncores = n_sites
+        ncores = 12
         pool = ProcessPool(ncores)
         pool.map(_data_container_sites, data_container_sites)
         #pool.close()
@@ -124,9 +124,26 @@ if (args.key == 'report' or args.key == 'all'):
     final_report.data_container.validation_sequence.batch_size = 1000
     final_report.create_model_report()
 
-if (args.key == 'apply' or args.key == 'all'):
+if (args.key == 'apply' or args.key == 'apply-3m' or args.key == 'all'):
     data_container = data_core.DataContainer(config)
-    data_container.build_or_load_scalers()
+    if args.key == 'apply-3m':
+        DIR_MODEL = '/home/cfo_3m_models'
+        feature_scaler_names = data_container.config.data_samples.feature_scaler_names[0]
+        response_scaler_names = data_container.config.data_samples.response_scaler_names[0]
+
+        feature = glob.glob('{dir}/*{name}*'.format(dir=DIR_MODEL,name=feature_scaler_names))[0]
+        response = glob.glob('{dir}/*{name}*'.format(dir=DIR_MODEL,name=response_scaler_names))[0]
+
+        feat_scaler_atr = {"savename_base": feature.split('sklearn')[0]}
+        feature_scaler = scalers.get_scaler(feature_scaler_names, feat_scaler_atr)
+        resp_scaler_atr = {"savename_base": response.split('sklearn')[0]}
+        response_scaler = scalers.get_scaler(response_scaler_names, resp_scaler_atr)
+        feature_scaler.load()
+        response_scaler.load()
+        data_container.feature_scaler = feature_scaler
+        data_container.response_scaler = response_scaler      
+    else:
+        data_container.build_or_load_scalers()
 
     experiment = experiments.Experiment(config)
     if args.load_cpu:
