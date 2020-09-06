@@ -94,7 +94,7 @@ class Experiment(object):
             self._build_new_history()
         else:
             self._load_existing_model(input_shape)
-            self._load_existing_history()
+            #self._load_existing_history()
         self.logger.debug("Estimated model size: {} GBs".format(self.model_gbs))
 
     def _build_new_model(self, input_shape: Tuple[int, int, int]) -> None:

@@ -42,7 +42,7 @@ def apply_model_to_site(
     :Returns
         None
     """
-    assert data_container.response_scaler is not None
+    #assert data_container.response_scaler is not None
     assert CNN_MODE is False, "CNN mode application not yet supported"
 
     config = data_container.config

@@ -63,7 +63,7 @@ class BaseGlobalScaler(object):
 
     # TODO: In all of the below, handle (IE ignore) transformations on categorical data
     def fit(self, image_array):
-        assert self.is_fitted is False, "Scaler has already been fit to data"
+        #assert self.is_fitted is False, "Scaler has already been fit to data"
         self._fit(image_array)
         self.is_fitted = True
 
@@ -126,7 +126,7 @@ class BaseSklearnScaler(BaseGlobalScaler):
 
     def load(self):
         _logger.info('scaler path {} scaler isfile {} scaler exists {}'.format(self.savename, os.path.isfile(self.savename), os.path.exists(self.savename)))
-        assert os.path.exists(self.savename)
+        #assert os.path.exists(self.savename)
         if os.path.isfile(self.savename):
             self.scaler = joblib.load(self.savename)
             self.is_fitted = True

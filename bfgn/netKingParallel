@@ -35,8 +35,8 @@ logger = logging.getLogger()
 
 assert os.path.isfile(args.settings_file), 'Settings file: ' + args.settings_file + ' does not exist'
 config = configs.create_config_from_file(args.settings_file)
-assert config.data_build.dir_out == '/home/cfo_3m_models'
-assert config.model_training.dir_out == '/home/cfo_3m_models'
+#assert config.data_build.dir_out == '/home/cfo_3m_models'
+#assert config.model_training.dir_out == '/home/cfo_3m_models'
 
 
 if (args.key == 'train' or args.key == 'all'):
@@ -142,8 +142,8 @@ if (args.key == 'apply' or args.key == 'all'):
     if args.load_cpu:
         experiment.load_cpu = True
     experiment.build_or_load_model(data_container=data_container)
-    experiment.history['is_model_trained'] = True
-    experiment.is_model_trained = True
+    #experiment.history['is_model_trained'] = True
+    #experiment.is_model_trained = True
     has_ftrs = data_container.feature_scaler is not None
     has_rsps = data_container.response_scaler is not None
     assert has_ftrs and has_rsps, 'exists ftrs {} rsps {}'.format(has_ftrs, has_rsps)
@@ -172,6 +172,7 @@ if (args.key == 'apply' or args.key == 'all'):
         else:
             application_feature_files = args.input_file
             print('file in: {}'.format(application_feature_files))
+            print('model: {}'.format(experiment.filepath_model))
             bfgn.data_management.apply_model_to_data.apply_model_to_site(experiment.model,
                                                                         data_container,
                                                                         application_feature_files,
