@@ -72,12 +72,7 @@ class DataContainer:
         #    "bfgn.data_management", self.config.data_build.log_level, get_log_filepath(self.config)
         #)
 
-        if os.path.isfile(get_built_data_container_filepath(self.config)):
-            _logger.info("Previously saved DataContainer found")
-            try:
-                self._load_data_core()
-            except:
-                _logger.info("Failed to load previously saved DataContainer")
+        self._load_data_core()
 
     def build_or_load_rawfile_data(self, rebuild: bool = False) -> None:
         """ If rawfile data has previously been built as described by the
@@ -172,30 +167,16 @@ class DataContainer:
         #  according to the DataConfig, in which case it would error out. This needs to be updated for multiple scalers.
         #  Specifically, the feature_scaler and response_scaler assignments need to be vectorized.
         basename = get_memmap_basename(self.config)
-        feat_scaler_atr = {"savename_base": basename + "_feature_scaler"}
-        feature_scaler = scalers.get_scaler(self.config.data_samples.feature_scaler_names[0], feat_scaler_atr)
-        resp_scaler_atr = {"savename_base": basename + "_response_scaler"}
-        response_scaler = scalers.get_scaler(self.config.data_samples.response_scaler_names[0], resp_scaler_atr)
-        feature_scaler.load()
-        response_scaler.load()
+        self.feature_scaler = scalers.NullScaler('any')
+        import joblib
+        self.response_scaler = joblib.load('/root/response_scaler')
 
         self.train_folds = [
             x
             for x in range(self.config.data_build.number_folds)
             if x not in (self.config.data_build.validation_fold, self.config.data_build.test_fold)
         ]
-
-        if feature_scaler.is_fitted is False or rebuild is True:
-            # TODO: do better
-            feature_scaler.fit(self.features[self.train_folds[0]])
-            feature_scaler.save()
-        if response_scaler.is_fitted is False or rebuild is True:
-            # TODO: do better
-            response_scaler.fit(self.responses[self.train_folds[0]])
-            response_scaler.save()
-
-        self.feature_scaler = feature_scaler
-        self.response_scaler = response_scaler
+        return
 
     def load_sequences(self, custom_augmentations: albumentations.Compose = None) -> None:
         """

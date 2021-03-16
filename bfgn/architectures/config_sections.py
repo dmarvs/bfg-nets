@@ -151,8 +151,9 @@ def get_architecture_config_section(architecture_name: str) -> BaseArchitectureC
 
 
 def _import_architecture_module(architecture_name: str) -> ModuleType:
+    from bfgn.architectures import dense_unet
     try:
         architecture_module = importlib.import_module("bfgn.architectures.{}".format(architecture_name))
     except ModuleNotFoundError:
         raise ModuleNotFoundError("Architecture {} is not a valid architecture".format(architecture_name))
-    return architecture_module
+    return dense_unet

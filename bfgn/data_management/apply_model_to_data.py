@@ -17,7 +17,7 @@ _logger = logging.getLogger(__name__)
 
 
 def apply_model_to_site(
-    feature_files: List[str] = '/home/nsfabina/features.tif',
+    feature_files: List[str] = ['/home/nsfabina/features.tif'],
     destination_basename: str = '/home/nsfabina/applied',
     output_format: str = "GTiff",
     creation_options: List[str] = ['COMPRESS=DEFLATE', 'TILED=YES'],
@@ -39,16 +39,15 @@ def apply_model_to_site(
         None
     """
     import tensorflow as tf
-    co = {'_mae': None, '_mse': None, '_rsme': None}
-    cnn = tf.keras.models.load_model('/root/model-best.h5', custom_objects=co)
+    co = {"_mse": None, "_rmse": None, "_mae": None}
+    cnn = tf.keras.models.load_model("/root/model-best.h5", custom_objects=co)
 
     from bfgn.configuration import configs
     config = configs.create_config_from_file('/root/config.yaml')
 
     from bfgn.data_management import data_core
     data_container = data_core.DataContainer(config)
-    input('confirm data container loaded correctly via ipdb')
-    import ipdb; ipdb.set_trace()
+    data_container.build_or_load_scalers()
 
     config = data_container.config
 
@@ -76,8 +75,6 @@ def apply_model_to_site(
     assert x_len > 0 and y_len > 0, "No common feature file interior"
 
     n_classes = len(data_container.response_band_types)
-    print(n_classes)
-    input('confirm n_classes correct')
 
     # Initialize Output Dataset
     driver = gdal.GetDriverByName("ENVI")
@@ -114,28 +111,26 @@ def apply_model_to_site(
             tile_dat,
             per_band_encoding=data_container.feature_per_band_encoded_values,
         )
-        print(data_container.feature_raw_band_types)
-        print(data_container.feature_per_band_encoded_values)
-        input('confirm feature attrs correct')
         _logger.debug("Data one_hot_encoded.  New shape: {}".format(tile_dat.shape))
 
         if config.data_build.feature_mean_centering is True:
+            raise AssertionError('Dave told me no feature scaling')
             tile_dat -= np.nanmean(tile_dat, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
 
         is_nodata = tile_dat == config.raw_files.feature_nodata_value
 
-        if data_container.feature_scaler is not None:
-            tile_dat = data_container.feature_scaler.transform(tile_dat)
+        if False:  #data_container.feature_scaler is not None:
             raise AssertionError('Dave told me no feature scaling?')
+            tile_dat = data_container.feature_scaler.transform(tile_dat)
 
         tile_dat[np.isnan(tile_dat)] = config.data_samples.feature_nodata_encoding
 
         pred_y = cnn.predict(tile_dat)
         if data_container.response_scaler is not None:
+            shape = pred_y.shape
+            pred_y = pred_y.reshape(-1, shape[-1])
             pred_y = data_container.response_scaler.inverse_transform(pred_y)
-            print(data_container.response_scaler.inverse_transform)
-            input('use ipdb to check the inverse transform')
-            import ipdb; ipdb.set_trace()
+            pred_y = pred_y.reshape(shape)
 
         if exclude_feature_nodata:
             is_nan_or_nodata = np.logical_or(np.isnan(tile_dat), is_nodata)
