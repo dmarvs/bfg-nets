@@ -283,6 +283,13 @@ def convert_envi_file(
     Returns:
          None
     """
+
+    filepath_tmp = destination_basename + '.tif'
+    options = "-of GTiff -co COMPRESS=DEFLATE -co TILED=YES -co BIGTIFF=IF_SAFER"
+    gdal.Translate(filepath_tmp, gdal.Open(original_file, gdal.GA_ReadOnly), options=options)
+    os.remove(original_file)
+    return
+
     final_outname = destination_basename
     if output_format == "GTiff":
         final_outname += ".tif"
