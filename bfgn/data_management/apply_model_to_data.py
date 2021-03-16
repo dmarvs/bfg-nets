@@ -270,3 +270,7 @@ def _convert_chunk_to_tiles(
     col_index = np.array(col_index)
 
     return output_array, col_index
+
+
+if __name__ == '__main__':
+    apply_model_to_site()
