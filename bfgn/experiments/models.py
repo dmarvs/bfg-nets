@@ -1,7 +1,7 @@
 import logging
 from typing import Union
 
-import keras
+import tensorflow.keras as keras
 
 _logger = logging.getLogger(__name__)
 

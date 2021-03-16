@@ -1,6 +1,6 @@
 import os
 
-import keras.backend as K
+import tensorflow.keras as keras.backend as K
 import numpy as np
 import pytest
 

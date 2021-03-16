@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Callable, Tuple
 
-import keras.backend as K
+import tensorflow.keras as keras.backend as K
 import numpy as np
 
 from bfgn.architectures import config_sections

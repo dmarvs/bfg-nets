@@ -3,7 +3,7 @@ import os
 from typing import List, Tuple
 
 import gdal
-import keras
+import tensorflow.keras as keras
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm

@@ -1,6 +1,6 @@
 from typing import Tuple
 
-import keras
+import tensorflow.keras as keras
 from keras.layers import BatchNormalization, Concatenate, Conv2D, Conv2DTranspose, MaxPooling2D, UpSampling2D
 
 from bfgn.architectures import config_sections, network_sections

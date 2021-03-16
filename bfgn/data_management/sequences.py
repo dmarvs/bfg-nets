@@ -2,7 +2,7 @@ import logging
 from typing import List, Tuple, Union
 
 import albumentations
-import keras
+import tensorflow.keras as keras
 import numpy as np
 
 from bfgn.data_management.scalers import BaseGlobalScaler

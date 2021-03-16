@@ -1,6 +1,6 @@
 from typing import List
 
-import keras
+import tensorflow.keras as keras
 import numpy as np
 
 from bfgn.configuration import configs

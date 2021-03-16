@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-import keras
+import tensorflow.keras as keras
 import matplotlib.pyplot as plt
 import numpy as np
 

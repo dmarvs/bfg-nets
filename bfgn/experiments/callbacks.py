@@ -3,7 +3,7 @@ import logging
 import os
 from typing import List
 
-import keras
+import tensorflow.keras as keras
 
 from bfgn.configuration import configs
 from bfgn.experiments import experiments, histories

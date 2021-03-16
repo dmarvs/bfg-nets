@@ -1,7 +1,7 @@
 import importlib
 from types import ModuleType
 
-import keras
+import tensorflow.keras as keras
 
 from bfgn.configuration import DEFAULT_REQUIRED_VALUE, sections
 
