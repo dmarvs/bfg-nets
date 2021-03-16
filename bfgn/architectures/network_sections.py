@@ -1,7 +1,7 @@
 from typing import Tuple
 
 import tensorflow.keras as keras
-from keras.layers import BatchNormalization, Concatenate, Conv2D
+from tensorflow.keras.layers import BatchNormalization, Concatenate, Conv2D
 
 # TODO: rename functions where necessary
 
