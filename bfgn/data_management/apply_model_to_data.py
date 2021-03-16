@@ -16,6 +16,7 @@ plt.switch_backend("Agg")  # Needed for remote server plotting
 _logger = logging.getLogger(__name__)
 
 
+
 def apply_model_to_site(
     feature_files: List[str] = ['/home/nsfabina/features.tif'],
     destination_basename: str = '/home/nsfabina/applied',
@@ -39,7 +40,10 @@ def apply_model_to_site(
         None
     """
     import tensorflow as tf
-    co = {"_mse": None, "_rmse": None, "_mae": None}
+    #co = {"_mse": None, "_rmse": None, "_mae": None}
+    from cfo_model_updates.model_ops import models
+    model = models.model_configs.Model('veg-height', '10m', 'all', 'sentinel')
+    co = models.get_model_custom_objects(model)
     cnn = tf.keras.models.load_model("/root/model-best.h5", custom_objects=co)
 
     from bfgn.configuration import configs
@@ -131,6 +135,15 @@ def apply_model_to_site(
             pred_y = pred_y.reshape(-1, shape[-1])
             pred_y = data_container.response_scaler.inverse_transform(pred_y)
             pred_y = pred_y.reshape(shape)
+
+        import ipdb; ipdb.set_trace()
+        if pred_y.shape[1] != tile_dat.shape[1]:
+            newshape = list(pred_y.shape)
+            newshape[1] *= 2
+            newshape[2] *= 2
+            tmp = np.zeros(newshape)
+            tmp[:, 16:-16, 16:-16, :] = pred_y
+            pred_y = tmp
 
         if exclude_feature_nodata:
             is_nan_or_nodata = np.logical_or(np.isnan(tile_dat), is_nodata)
