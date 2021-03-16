@@ -66,11 +66,11 @@ class DataContainer:
         assert not errors, errors
         self.config = config
 
-        create_built_data_output_directory(self.config)
-
-        self.logger = root_logging.get_bfgn_logger(
-            "bfgn.data_management", self.config.data_build.log_level, get_log_filepath(self.config)
-        )
+        # Don't need for apply?
+        # create_built_data_output_directory(self.config)
+        #self.logger = root_logging.get_bfgn_logger(
+        #    "bfgn.data_management", self.config.data_build.log_level, get_log_filepath(self.config)
+        #)
 
         if os.path.isfile(get_built_data_container_filepath(self.config)):
             _logger.info("Previously saved DataContainer found")
@@ -383,7 +383,8 @@ class DataContainer:
         )
 
     def _load_data_core(self):
-        npzf = np.load(get_built_data_container_filepath(self.config), allow_pickle=True)
+        #npzf = np.load(get_built_data_container_filepath(self.config), allow_pickle=True)
+        npzf = np.load('/root/data_container.npz', allow_pickle=True)
         self.feature_band_types = npzf["feature_band_types"]
         self.response_band_types = npzf["response_band_types"]
         self.feature_raw_band_types = npzf["feature_raw_band_types"]
