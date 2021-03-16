@@ -80,23 +80,28 @@ def apply_model_to_site(
 
     n_classes = len(data_container.response_band_types)
 
-    # Initialize Output Dataset
-    driver = gdal.GetDriverByName("ENVI")
-    driver.Register()
 
+    driver = gdal.GetDriverByName("ENVI")
+    # TODO:  did driver.Register() matter?
     temporary_outname = destination_basename
-    if output_format != "ENVI":
-        temporary_outname = temporary_outname + "_temporary_ENVI_file"
-        _logger.debug("Creating output envi file: {}".format(temporary_outname))
-    else:
-        _logger.debug("Creating temporary output envi file: {}".format(temporary_outname))
-    outDataset = driver.Create(temporary_outname, x_len, y_len, n_classes, gdal.GDT_Float32)
+    outDataset = driver.Create(
+        temporary_outname,
+        xsize=x_len,
+        ysize=y_len,
+        bands=1,
+        eType=gdal.GDT_Float32,
+    )
     out_trans = list(feature_sets[0].GetGeoTransform())
     out_trans[0] = out_trans[0] + internal_ul_list[0][0] * out_trans[1]
     out_trans[3] = out_trans[3] + internal_ul_list[0][0] * out_trans[5]
     outDataset.SetProjection(feature_sets[0].GetProjection())
     outDataset.SetGeoTransform(out_trans)
     del outDataset
+
+    # Set default value to nodata
+    output = np.memmap(temporary_outname, mode="r+", shape=(1, x_len, y_len), dtype=np.float32)
+    output[:, :, :] = -10
+    del output
 
     for _row in tqdm(range(0, y_len, config.data_build.loss_window_radius * 2), ncols=80):
         _row = min(_row, y_len - 2 * config.data_build.window_radius)
@@ -173,7 +178,8 @@ def apply_model_to_site(
         _logger.debug("Convert output shape from (y,x,b) to (b,y,x)")
         output = np.moveaxis(output, [0, 1, 2], [1, 2, 0])
 
-        output_memmap = np.memmap(temporary_outname, mode="r+", shape=(n_classes, y_len, x_len), dtype=np.float32)
+        output_memmap = np.memmap(temporary_outname, mode="r+", shape=(1, x_len, y_len), dtype=np.float32)
+        #output_memmap = np.memmap(temporary_outname, mode="r+", shape=(n_classes, y_len, x_len), dtype=np.float32)
         outrow = _row + window_radius_difference
         output_memmap[:, outrow : outrow + config.data_build.loss_window_radius * 2, :] = output
         del output_memmap
