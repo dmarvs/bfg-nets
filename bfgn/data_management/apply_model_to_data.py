@@ -35,7 +35,7 @@ _logger = logging.getLogger(__name__)
 
 
 def apply_model_to_site(
-    feature_files: List[str] = ['/home/nsfabina/features.tif'],
+    feature_files: List[str] = ['/root/features.tif'],
     destination_basename: str = '/home/nsfabina/applied',
     output_format: str = "GTiff",
     creation_options: List[str] = ['COMPRESS=DEFLATE', 'TILED=YES'],
