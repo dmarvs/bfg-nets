@@ -97,28 +97,8 @@ def apply_model_to_site(
 
     n_classes = len(data_container.response_band_types)
 
-
-    driver = gdal.GetDriverByName("ENVI")
-    # TODO:  did driver.Register() matter?
+    memmap_loader = datasets_application._create_temporary_memmap_array_for_batch_output()
     temporary_outname = destination_basename
-    outDataset = driver.Create(
-        temporary_outname,
-        xsize=x_len,
-        ysize=y_len,
-        bands=1,
-        eType=gdal.GDT_Float32,
-    )
-    out_trans = list(feature_sets[0].GetGeoTransform())
-    out_trans[0] = out_trans[0] + internal_ul_list[0][0] * out_trans[1]
-    out_trans[3] = out_trans[3] + internal_ul_list[0][0] * out_trans[5]
-    outDataset.SetProjection(feature_sets[0].GetProjection())
-    outDataset.SetGeoTransform(out_trans)
-    del outDataset
-
-    # Set default value to nodata
-    output = np.memmap(temporary_outname, mode="r+", shape=(1, y_len, x_len), dtype=np.float32)
-    output[:, :, :] = -10
-    del output
 
     for _row in tqdm(range(0, y_len, config.data_build.loss_window_radius * 2), ncols=80):
         _row = min(_row, y_len - 2 * config.data_build.window_radius)
@@ -139,15 +119,7 @@ def apply_model_to_site(
         )
         _logger.debug("Data one_hot_encoded.  New shape: {}".format(tile_dat.shape))
 
-        if config.data_build.feature_mean_centering is True:
-            raise AssertionError('Dave told me no feature scaling')
-            tile_dat -= np.nanmean(tile_dat, axis=(1, 2))[:, np.newaxis, np.newaxis, :]
-
         is_nodata = tile_dat == config.raw_files.feature_nodata_value
-
-        if False:  #data_container.feature_scaler is not None:
-            raise AssertionError('Dave told me no feature scaling?')
-            tile_dat = data_container.feature_scaler.transform(tile_dat)
 
         tile_dat[np.isnan(tile_dat)] = config.data_samples.feature_nodata_encoding
 
@@ -195,8 +167,7 @@ def apply_model_to_site(
         _logger.debug("Convert output shape from (y,x,b) to (b,y,x)")
         output = np.moveaxis(output, [0, 1, 2], [1, 2, 0])
 
-        output_memmap = np.memmap(temporary_outname, mode="r+", shape=(1, y_len, x_len), dtype=np.float32)
-        #output_memmap = np.memmap(temporary_outname, mode="r+", shape=(n_classes, y_len, x_len), dtype=np.float32)
+        output_memmap = memmap_loader()
         outrow = _row + window_radius_difference
         output_memmap[:, outrow : outrow + config.data_build.loss_window_radius * 2, :] = output
         del output_memmap
