@@ -172,7 +172,7 @@ def apply_model_to_site(
         output_memmap[:, outrow : outrow + config.data_build.loss_window_radius * 2, :] = output
         del output_memmap
 
-    common_io.convert_envi_file(temporary_outname, destination_basename, output_format, True, creation_options)
+    datasets_application._create_gtiff_raster_from_temporary_memmap_array()
 
 
 def maximum_likelihood_classification(
