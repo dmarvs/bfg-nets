@@ -99,7 +99,7 @@ def apply_model_to_site(
     del outDataset
 
     # Set default value to nodata
-    output = np.memmap(temporary_outname, mode="r+", shape=(1, x_len, y_len), dtype=np.float32)
+    output = np.memmap(temporary_outname, mode="r+", shape=(1, y_len, x_len), dtype=np.float32)
     output[:, :, :] = -10
     del output
 
@@ -178,7 +178,7 @@ def apply_model_to_site(
         _logger.debug("Convert output shape from (y,x,b) to (b,y,x)")
         output = np.moveaxis(output, [0, 1, 2], [1, 2, 0])
 
-        output_memmap = np.memmap(temporary_outname, mode="r+", shape=(1, x_len, y_len), dtype=np.float32)
+        output_memmap = np.memmap(temporary_outname, mode="r+", shape=(1, y_len, x_len), dtype=np.float32)
         #output_memmap = np.memmap(temporary_outname, mode="r+", shape=(n_classes, y_len, x_len), dtype=np.float32)
         outrow = _row + window_radius_difference
         output_memmap[:, outrow : outrow + config.data_build.loss_window_radius * 2, :] = output
